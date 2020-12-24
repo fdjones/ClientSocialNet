@@ -19,13 +19,18 @@ function App() {
     if (activityToSelect) {
       setSelectedActivity(activityToSelect);
     }
+
+    setEditMode(false);
   }
 
   React.useEffect(() => {
     axios
       .get<IActivity[]>("http://localhost:5000/api/activities")
       .then(({ data }) => {
-        setActivities(data);
+        // remove extra level of accuracy in datetime returned from server
+        setActivities(
+          data.map((act) => ({ ...act, date: act.date.split(".")[0] }))
+        );
       });
   }, []);
 
