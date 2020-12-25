@@ -1,9 +1,9 @@
 import React from "react";
-import axios from "axios";
 import { Container } from "semantic-ui-react";
 import { IActivity } from "../models/activity";
 import { NavBar } from "../../features/nav/NavBar";
 import { ActivityDashboard } from "../../features/activities/dashboard/ActivityDashboard";
+import agent from "../api/agent";
 
 function App() {
   const [activities, setActivities] = React.useState<IActivity[]>([]);
@@ -24,14 +24,16 @@ function App() {
   }
 
   React.useEffect(() => {
-    axios
-      .get<IActivity[]>("http://localhost:5000/api/activities")
-      .then(({ data }) => {
-        // remove extra level of accuracy in datetime returned from server
-        setActivities(
-          data.map((act) => ({ ...act, date: act.date.split(".")[0] }))
-        );
-      });
+    agent.Activities.list().then((activities) => {
+      setActivities(
+        activities.map((activity) => ({
+          ...activity,
+          // remove extra level of accuracy in datetime returned from server
+          // in order to format correctly on front end
+          date: activity.date.split(".")[0],
+        }))
+      );
+    });
   }, []);
 
   function handleOpenCreateForm() {
@@ -40,19 +42,27 @@ function App() {
   }
 
   function handleCreateActivity(activity: IActivity) {
-    setActivities([...activities, activity]);
-    setSelectedActivity(activity);
-    setEditMode(false);
+    agent.Activities.create(activity).then(() => {
+      setActivities([...activities, activity]);
+      setSelectedActivity(activity);
+      setEditMode(false);
+    });
   }
 
   function handleEditActivity(activity: IActivity) {
-    setActivities(activities.map((a) => (a.id === activity.id ? activity : a)));
-    setSelectedActivity(activity);
-    setEditMode(false);
+    agent.Activities.update(activity).then(() => {
+      setActivities(
+        activities.map((a) => (a.id === activity.id ? activity : a))
+      );
+      setSelectedActivity(activity);
+      setEditMode(false);
+    });
   }
 
   function handleDeleteActivity(id: string) {
-    setActivities(activities.filter((act) => act.id !== id));
+    agent.Activities.delete(id).then(() => {
+      setActivities(activities.filter((act) => act.id !== id));
+    });
   }
 
   return (
