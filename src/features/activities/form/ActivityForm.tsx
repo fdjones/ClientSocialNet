@@ -5,7 +5,7 @@ import { IActivity } from "../../../app/models/activity";
 
 interface IProps {
   setEditMode: (editMode: boolean) => void;
-  selectedActivity: IActivity | null;
+  selectedActivity: IActivity | undefined;
   createActivity: (activity: IActivity) => void;
   editActivity: (activity: IActivity) => void;
   submitting: boolean;

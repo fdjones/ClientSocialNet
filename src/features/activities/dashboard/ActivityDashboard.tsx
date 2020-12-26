@@ -1,15 +1,14 @@
-import React, { SyntheticEvent } from "react";
+import { observer } from "mobx-react-lite";
+import React, { SyntheticEvent, useContext } from "react";
 import { Grid } from "semantic-ui-react";
 import { IActivity } from "../../../app/models/activity";
 import { ActivityDetails } from "../details/ActivityDetails";
 import { ActivityForm } from "../form/ActivityForm";
 import { ActivityList } from "./ActivityList";
+import ActivityStore from "../../../app/stores/activityStore";
 
 interface IProps {
   activities: IActivity[];
-  selectActivity: (id: string) => void;
-  selectedActivity: IActivity | null;
-  editMode: boolean;
   setEditMode: (editMode: boolean) => void;
   setSelectedActivity: (activity: IActivity | null) => void;
   createActivity: (activity: IActivity) => void;
@@ -22,12 +21,8 @@ interface IProps {
   target: string;
 }
 
-export const ActivityDashboard: React.FC<IProps> = ({
-  activities,
-  selectActivity,
-  selectedActivity,
+const ActivityDashboard: React.FC<IProps> = ({
   setSelectedActivity,
-  editMode,
   setEditMode,
   createActivity,
   editActivity,
@@ -35,12 +30,12 @@ export const ActivityDashboard: React.FC<IProps> = ({
   submitting,
   target,
 }) => {
+  const { editMode, selectedActivity } = useContext(ActivityStore);
+
   return (
     <Grid>
       <Grid.Column width={10}>
         <ActivityList
-          selectActivity={selectActivity}
-          activities={activities}
           deleteActivity={deleteActivity}
           submitting={submitting}
           target={target}
@@ -49,8 +44,6 @@ export const ActivityDashboard: React.FC<IProps> = ({
       <Grid.Column width={6}>
         {selectedActivity && !editMode && (
           <ActivityDetails
-            selectedActivity={selectedActivity}
-            activity={activities[0]}
             setEditMode={setEditMode}
             setSelectedActivity={setSelectedActivity}
           />
@@ -69,3 +62,5 @@ export const ActivityDashboard: React.FC<IProps> = ({
     </Grid>
   );
 };
+
+export default observer(ActivityDashboard);

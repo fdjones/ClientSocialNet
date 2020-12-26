@@ -1,48 +1,27 @@
-import React, { SyntheticEvent } from "react";
+import React, { SyntheticEvent, useContext } from "react";
 import { Container } from "semantic-ui-react";
 import { IActivity } from "../models/activity";
 import { NavBar } from "../../features/nav/NavBar";
-import { ActivityDashboard } from "../../features/activities/dashboard/ActivityDashboard";
+import ActivityDashboard from "../../features/activities/dashboard/ActivityDashboard";
 import agent from "../api/agent";
 import { LoadingComponent } from "./LoadingComponent";
+import ActivityStore from "../stores/activityStore";
+import { observer } from "mobx-react-lite";
 
-function App() {
+const App = () => {
+  const activityStore = useContext(ActivityStore);
   const [activities, setActivities] = React.useState<IActivity[]>([]);
   const [
     selectedActivity,
     setSelectedActivity,
   ] = React.useState<IActivity | null>(null);
   const [editMode, setEditMode] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
   const [target, setTarget] = React.useState("");
 
-  function handleSelectActivity(id: string) {
-    const activityToSelect = activities.find((activity) => activity.id === id);
-
-    if (activityToSelect) {
-      setSelectedActivity(activityToSelect);
-    }
-
-    setEditMode(false);
-  }
-
   React.useEffect(() => {
-    agent.Activities.list()
-      .then((activities) => {
-        setActivities(
-          activities.map((activity) => ({
-            ...activity,
-            // remove extra level of accuracy in datetime returned from server
-            // in order to format correctly on front end
-            date: activity.date.split(".")[0],
-          }))
-        );
-      })
-      .then(() => {
-        setLoading(false);
-      });
-  }, []);
+    activityStore.loadActivities();
+  }, [activityStore]);
 
   function handleOpenCreateForm() {
     setSelectedActivity(null);
@@ -93,18 +72,16 @@ function App() {
       });
   }
 
-  if (loading) return <LoadingComponent content="Loading..." />;
+  if (activityStore.loadingInitial)
+    return <LoadingComponent content="Loading..." />;
 
   return (
     <>
       <NavBar openCreateForm={handleOpenCreateForm} />
       <Container style={{ marginTop: "7em" }}>
         <ActivityDashboard
-          selectActivity={handleSelectActivity}
-          activities={activities}
-          selectedActivity={selectedActivity}
+          activities={activityStore.activities}
           setSelectedActivity={setSelectedActivity}
-          editMode={editMode}
           setEditMode={setEditMode}
           createActivity={handleCreateActivity}
           editActivity={handleEditActivity}
@@ -115,6 +92,6 @@ function App() {
       </Container>
     </>
   );
-}
+};
 
-export default App;
+export default observer(App);
