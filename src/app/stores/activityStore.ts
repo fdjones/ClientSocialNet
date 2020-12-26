@@ -1,5 +1,5 @@
 import { IActivity } from "./../models/activity";
-import { makeAutoObservable } from "mobx";
+import { action, makeAutoObservable } from "mobx";
 import { createContext, SyntheticEvent } from "react";
 import agent from "../api/agent";
 
@@ -26,15 +26,20 @@ class ActivityStore {
     this.loadingInitial = true;
 
     agent.Activities.list()
-      .then((activities) => {
-        activities.forEach((activity) => {
-          activity.date = activity.date.split(".")[0];
-          this.activityRegistry.set(activity.id, activity);
-        });
-      })
-      .finally(() => {
-        this.loadingInitial = false;
-      });
+      .then(
+        action("fetchSuccess", (activities: IActivity[]) => {
+          activities.forEach((activity) => {
+            activity.date = activity.date.split(".")[0];
+            this.activityRegistry.set(activity.id, activity);
+          });
+        })
+      )
+
+      .finally(
+        action("finallyAction", () => {
+          this.loadingInitial = false;
+        })
+      );
   };
 
   selectActivity = (id: string) => {
@@ -45,40 +50,52 @@ class ActivityStore {
   createActivity = (activity: IActivity) => {
     this.submitting = true;
     agent.Activities.create(activity)
-      .then(() => {
-        this.activityRegistry.set(activity.id, activity);
-        this.selectedActivity = activity;
-        this.editMode = false;
-      })
-      .then(() => {
-        this.submitting = false;
-      });
+      .then(
+        action("createSuccess", () => {
+          this.activityRegistry.set(activity.id, activity);
+          this.selectedActivity = activity;
+          this.editMode = false;
+        })
+      )
+      .finally(
+        action("createFinally", () => {
+          this.submitting = false;
+        })
+      );
   };
 
   editActivity = (activity: IActivity) => {
     this.submitting = true;
 
     agent.Activities.update(activity)
-      .then(() => {
-        this.activityRegistry.set(activity.id, activity);
-        this.selectedActivity = activity;
-        this.editMode = false;
-      })
-      .then(() => {
-        this.submitting = false;
-      });
+      .then(
+        action("editSuccess", () => {
+          this.activityRegistry.set(activity.id, activity);
+          this.selectedActivity = activity;
+          this.editMode = false;
+        })
+      )
+      .finally(
+        action("editFinally", () => {
+          this.submitting = false;
+        })
+      );
   };
 
   deleteActivity = (event: SyntheticEvent<HTMLButtonElement>, id: string) => {
     this.submitting = true;
     this.target = event.currentTarget.name;
     agent.Activities.delete(id)
-      .then(() => {
-        this.activityRegistry.delete(id);
-      })
-      .finally(() => {
-        this.submitting = false;
-      });
+      .then(
+        action("deleteSuccess", () => {
+          this.activityRegistry.delete(id);
+        })
+      )
+      .finally(
+        action("deleteFinally", () => {
+          this.submitting = false;
+        })
+      );
   };
 
   openEditForm = (id: string) => {
